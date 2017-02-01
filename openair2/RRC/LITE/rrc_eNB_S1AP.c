@@ -1,35 +1,28 @@
-/*******************************************************************************
-    OpenAirInterface
-    Copyright(c) 1999 - 2014 Eurecom
+/*
+ * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The OpenAirInterface Software Alliance licenses this file to You under
+ * the OAI Public License, Version 1.0  (the "License"); you may not use this file
+ * except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.openairinterface.org/?page_id=698
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *-------------------------------------------------------------------------------
+ * For more information about the OpenAirInterface (OAI) Software Alliance:
+ *      contact@openairinterface.org
+ */
 
-    OpenAirInterface is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-
-    OpenAirInterface is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with OpenAirInterface.The full GNU General Public License is
-    included in this distribution in the file called "COPYING". If not,
-    see <http://www.gnu.org/licenses/>.
-
-  Contact Information
-  OpenAirInterface Admin: openair_admin@eurecom.fr
-  OpenAirInterface Tech : openair_tech@eurecom.fr
-  OpenAirInterface Dev  : openair4g-devel@lists.eurecom.fr
-
-  Address      : Eurecom, Campus SophiaTech, 450 Route des Chappes, CS 50193 - 06904 Biot Sophia Antipolis cedex, FRANCE
-
-*******************************************************************************/
 /*! \file rrc_eNB_S1AP.c
  * \brief rrc S1AP procedures for eNB
- * \author Laurent Winckel and Sebastien ROUX and Navid Nikaein and Lionel GAUTHIER
- * \date 2013-2014
+ * \author Navid Nikaein, Laurent Winckel, Sebastien ROUX, and Lionel GAUTHIER
+ * \date 2013-2016
  * \version 1.0
  * \company Eurecom
  * \email: navid.nikaein@eurecom.fr
@@ -62,6 +55,8 @@
 #   include "UTIL/OSA/osa_defs.h"
 #endif
 #include "msc.h"
+
+#include "UERadioAccessCapabilityInformation.h"
 
 #include "gtpv1u_eNB_task.h"
 #include "RRC/LITE/rrc_eNB_GTPV1U.h"
@@ -485,8 +480,10 @@ rrc_eNB_send_S1AP_INITIAL_CONTEXT_SETUP_RESP(
       S1AP_INITIAL_CONTEXT_SETUP_RESP (msg_p).e_rabs[e_rab].gtp_teid = ue_context_pP->ue_context.enb_gtp_teid[e_rab];
       S1AP_INITIAL_CONTEXT_SETUP_RESP (msg_p).e_rabs[e_rab].eNB_addr = ue_context_pP->ue_context.enb_gtp_addrs[e_rab];
       S1AP_INITIAL_CONTEXT_SETUP_RESP (msg_p).e_rabs[e_rab].eNB_addr.length = 4;
+      ue_context_pP->ue_context.e_rab[e_rab].status = E_RAB_STATUS_ESTABLISHED;
     } else {
       e_rabs_failed++;
+      ue_context_pP->ue_context.e_rab[e_rab].status = E_RAB_STATUS_FAILED;
       S1AP_INITIAL_CONTEXT_SETUP_RESP (msg_p).e_rabs_failed[e_rab].e_rab_id = ue_context_pP->ue_context.e_rab[e_rab].param.e_rab_id;
       // TODO add cause when it will be integrated
     }
@@ -601,22 +598,22 @@ rrc_eNB_send_S1AP_UPLINK_NAS(
               decode_identity_response(&e_msg->identity_response, pdu_buff, pdu_len);
 
               if (e_msg->identity_response.mobileidentity.imsi.typeofidentity == MOBILE_IDENTITY_IMSI) {
-                ue_context_pP->ue_context.ue_imsi[0] = '0' + e_msg->identity_response.mobileidentity.imsi.digit1;
-                ue_context_pP->ue_context.ue_imsi[1] = '0' + e_msg->identity_response.mobileidentity.imsi.digit2;
-                ue_context_pP->ue_context.ue_imsi[2] = '0' + e_msg->identity_response.mobileidentity.imsi.digit3;
-                ue_context_pP->ue_context.ue_imsi[3] = '0' + e_msg->identity_response.mobileidentity.imsi.digit4;
-                ue_context_pP->ue_context.ue_imsi[4] = '0' + e_msg->identity_response.mobileidentity.imsi.digit5;
-                ue_context_pP->ue_context.ue_imsi[5] = '0' + e_msg->identity_response.mobileidentity.imsi.digit6;
-                ue_context_pP->ue_context.ue_imsi[6] = '0' + e_msg->identity_response.mobileidentity.imsi.digit7;
-                ue_context_pP->ue_context.ue_imsi[7] = '0' + e_msg->identity_response.mobileidentity.imsi.digit8;
-                ue_context_pP->ue_context.ue_imsi[8] = '0' + e_msg->identity_response.mobileidentity.imsi.digit9;
-                ue_context_pP->ue_context.ue_imsi[9] = '0' + e_msg->identity_response.mobileidentity.imsi.digit10;
-                ue_context_pP->ue_context.ue_imsi[10] = '0' + e_msg->identity_response.mobileidentity.imsi.digit11;
-                ue_context_pP->ue_context.ue_imsi[11] = '0' + e_msg->identity_response.mobileidentity.imsi.digit12;
-                ue_context_pP->ue_context.ue_imsi[12] = '0' + e_msg->identity_response.mobileidentity.imsi.digit13;
-                ue_context_pP->ue_context.ue_imsi[13] = '0' + e_msg->identity_response.mobileidentity.imsi.digit14;
-                ue_context_pP->ue_context.ue_imsi[14] = '0' + e_msg->identity_response.mobileidentity.imsi.digit15;
-                ue_context_pP->ue_context.ue_imsi[15] = '\0';
+                ue_context_pP->ue_context.ue_imsi = 0;
+                ue_context_pP->ue_context.ue_imsi = e_msg->identity_response.mobileidentity.imsi.digit15;
+                ue_context_pP->ue_context.ue_imsi += e_msg->identity_response.mobileidentity.imsi.digit14 * 10;
+                ue_context_pP->ue_context.ue_imsi += e_msg->identity_response.mobileidentity.imsi.digit13 * 100;
+                ue_context_pP->ue_context.ue_imsi += e_msg->identity_response.mobileidentity.imsi.digit12 * 1000;
+                ue_context_pP->ue_context.ue_imsi += e_msg->identity_response.mobileidentity.imsi.digit11 * 10000;
+                ue_context_pP->ue_context.ue_imsi += e_msg->identity_response.mobileidentity.imsi.digit10 * 100000;
+                ue_context_pP->ue_context.ue_imsi += e_msg->identity_response.mobileidentity.imsi.digit9 * 1000000;
+                ue_context_pP->ue_context.ue_imsi += e_msg->identity_response.mobileidentity.imsi.digit8 * 10000000;
+                ue_context_pP->ue_context.ue_imsi += e_msg->identity_response.mobileidentity.imsi.digit7 * 100000000;
+                ue_context_pP->ue_context.ue_imsi += e_msg->identity_response.mobileidentity.imsi.digit6 * 1000000000;
+                ue_context_pP->ue_context.ue_imsi += e_msg->identity_response.mobileidentity.imsi.digit5 * 10000000000;
+                ue_context_pP->ue_context.ue_imsi += e_msg->identity_response.mobileidentity.imsi.digit4 * 100000000000;
+                ue_context_pP->ue_context.ue_imsi += e_msg->identity_response.mobileidentity.imsi.digit3 * 1000000000000;
+                ue_context_pP->ue_context.ue_imsi += e_msg->identity_response.mobileidentity.imsi.digit2 * 10000000000000;
+                ue_context_pP->ue_context.ue_imsi += e_msg->identity_response.mobileidentity.imsi.digit1 * 100000000000000;
               }
             }
 
@@ -713,22 +710,22 @@ rrc_eNB_send_S1AP_UPLINK_NAS(
                   decode_identity_response(&e_msg->identity_response, pdu_buff, pdu_len);
 
                   if (e_msg->identity_response.mobileidentity.imsi.typeofidentity == MOBILE_IDENTITY_IMSI) {
-                    ue_context_pP->ue_context.ue_imsi[0] = '0' + e_msg->identity_response.mobileidentity.imsi.digit1;
-                    ue_context_pP->ue_context.ue_imsi[1] = '0' + e_msg->identity_response.mobileidentity.imsi.digit2;
-                    ue_context_pP->ue_context.ue_imsi[2] = '0' + e_msg->identity_response.mobileidentity.imsi.digit3;
-                    ue_context_pP->ue_context.ue_imsi[3] = '0' + e_msg->identity_response.mobileidentity.imsi.digit4;
-                    ue_context_pP->ue_context.ue_imsi[4] = '0' + e_msg->identity_response.mobileidentity.imsi.digit5;
-                    ue_context_pP->ue_context.ue_imsi[5] = '0' + e_msg->identity_response.mobileidentity.imsi.digit6;
-                    ue_context_pP->ue_context.ue_imsi[6] = '0' + e_msg->identity_response.mobileidentity.imsi.digit7;
-                    ue_context_pP->ue_context.ue_imsi[7] = '0' + e_msg->identity_response.mobileidentity.imsi.digit8;
-                    ue_context_pP->ue_context.ue_imsi[8] = '0' + e_msg->identity_response.mobileidentity.imsi.digit9;
-                    ue_context_pP->ue_context.ue_imsi[9] = '0' + e_msg->identity_response.mobileidentity.imsi.digit10;
-                    ue_context_pP->ue_context.ue_imsi[10] = '0' + e_msg->identity_response.mobileidentity.imsi.digit11;
-                    ue_context_pP->ue_context.ue_imsi[11] = '0' + e_msg->identity_response.mobileidentity.imsi.digit12;
-                    ue_context_pP->ue_context.ue_imsi[12] = '0' + e_msg->identity_response.mobileidentity.imsi.digit13;
-                    ue_context_pP->ue_context.ue_imsi[13] = '0' + e_msg->identity_response.mobileidentity.imsi.digit14;
-                    ue_context_pP->ue_context.ue_imsi[14] = '0' + e_msg->identity_response.mobileidentity.imsi.digit15;
-                    ue_context_pP->ue_context.ue_imsi[15] = '\0';
+                    ue_context_pP->ue_context.ue_imsi = 0;
+                    ue_context_pP->ue_context.ue_imsi = e_msg->identity_response.mobileidentity.imsi.digit15;
+                    ue_context_pP->ue_context.ue_imsi += e_msg->identity_response.mobileidentity.imsi.digit14 * 10;
+                    ue_context_pP->ue_context.ue_imsi += e_msg->identity_response.mobileidentity.imsi.digit13 * 100;
+                    ue_context_pP->ue_context.ue_imsi += e_msg->identity_response.mobileidentity.imsi.digit12 * 1000;
+                    ue_context_pP->ue_context.ue_imsi += e_msg->identity_response.mobileidentity.imsi.digit11 * 10000;
+                    ue_context_pP->ue_context.ue_imsi += e_msg->identity_response.mobileidentity.imsi.digit10 * 100000;
+                    ue_context_pP->ue_context.ue_imsi += e_msg->identity_response.mobileidentity.imsi.digit9 * 1000000;
+                    ue_context_pP->ue_context.ue_imsi += e_msg->identity_response.mobileidentity.imsi.digit8 * 10000000;
+                    ue_context_pP->ue_context.ue_imsi += e_msg->identity_response.mobileidentity.imsi.digit7 * 100000000;
+                    ue_context_pP->ue_context.ue_imsi += e_msg->identity_response.mobileidentity.imsi.digit6 * 1000000000;
+                    ue_context_pP->ue_context.ue_imsi += e_msg->identity_response.mobileidentity.imsi.digit5 * 10000000000;
+                    ue_context_pP->ue_context.ue_imsi += e_msg->identity_response.mobileidentity.imsi.digit4 * 100000000000;
+                    ue_context_pP->ue_context.ue_imsi += e_msg->identity_response.mobileidentity.imsi.digit3 * 1000000000000;
+                    ue_context_pP->ue_context.ue_imsi += e_msg->identity_response.mobileidentity.imsi.digit2 * 10000000000000;
+                    ue_context_pP->ue_context.ue_imsi += e_msg->identity_response.mobileidentity.imsi.digit1 * 100000000000000;
                   }
                 }
 
@@ -767,29 +764,42 @@ void rrc_eNB_send_S1AP_UE_CAPABILITIES_IND(
 //------------------------------------------------------------------------------
 {
   UECapabilityInformation_t *ueCapabilityInformation = &ul_dcch_msg->message.choice.c1.choice.ueCapabilityInformation;
+  /* 4096 is arbitrary, should be big enough */
+  unsigned char buf[4096];
+  unsigned char *buf2;
+  UERadioAccessCapabilityInformation_t rac;
 
-  if ((ueCapabilityInformation->criticalExtensions.present == UECapabilityInformation__criticalExtensions_PR_c1)
-      && (ueCapabilityInformation->criticalExtensions.choice.c1.present
-          == UECapabilityInformation__criticalExtensions__c1_PR_ueCapabilityInformation_r8)
-      && (ueCapabilityInformation->criticalExtensions.choice.c1.choice.ueCapabilityInformation_r8.ue_CapabilityRAT_ContainerList.list.count > 0)) {
-    UE_CapabilityRAT_ContainerList_t* ue_CapabilityRAT_ContainerList =
-      &ueCapabilityInformation->criticalExtensions.choice.c1.choice.ueCapabilityInformation_r8.ue_CapabilityRAT_ContainerList;
-    MessageDef *msg_p;
-
-    msg_p = itti_alloc_new_message (TASK_RRC_ENB, S1AP_UE_CAPABILITIES_IND);
-    S1AP_UE_CAPABILITIES_IND (msg_p).eNB_ue_s1ap_id = ue_context_pP->ue_context.eNB_ue_s1ap_id;
-    S1AP_UE_CAPABILITIES_IND (msg_p).ue_radio_cap.length = ue_CapabilityRAT_ContainerList->list.array[0]->ueCapabilityRAT_Container.size;
-    S1AP_UE_CAPABILITIES_IND (msg_p).ue_radio_cap.buffer = ue_CapabilityRAT_ContainerList->list.array[0]->ueCapabilityRAT_Container.buf;
-
-    itti_send_msg_to_task (TASK_S1AP, ctxt_pP->instance, msg_p);
-
-    if (ue_CapabilityRAT_ContainerList->list.count > 1) {
-      LOG_W (RRC,"[eNB %d][UE %x] can only handle 1 UE capability RAT item for now (%d)\n",
-             ctxt_pP->module_id,
-             ue_context_pP->ue_context.rnti,
-             ue_CapabilityRAT_ContainerList->list.count);
-    }
+  if (ueCapabilityInformation->criticalExtensions.present != UECapabilityInformation__criticalExtensions_PR_c1
+      || ueCapabilityInformation->criticalExtensions.choice.c1.present != UECapabilityInformation__criticalExtensions__c1_PR_ueCapabilityInformation_r8) {
+    LOG_E(RRC, "[eNB %d][UE %x] bad UE capabilities\n", ctxt_pP->module_id, ue_context_pP->ue_context.rnti);
+    return;
   }
+
+  asn_enc_rval_t ret = uper_encode_to_buffer(&asn_DEF_UECapabilityInformation, ueCapabilityInformation, buf, 4096);
+  if (ret.encoded == -1) abort();
+
+  memset(&rac, 0, sizeof(UERadioAccessCapabilityInformation_t));
+
+  rac.criticalExtensions.present = UERadioAccessCapabilityInformation__criticalExtensions_PR_c1;
+  rac.criticalExtensions.choice.c1.present = UERadioAccessCapabilityInformation__criticalExtensions__c1_PR_ueRadioAccessCapabilityInformation_r8;
+  rac.criticalExtensions.choice.c1.choice.ueRadioAccessCapabilityInformation_r8.ue_RadioAccessCapabilityInfo.buf = buf;
+  rac.criticalExtensions.choice.c1.choice.ueRadioAccessCapabilityInformation_r8.ue_RadioAccessCapabilityInfo.size = (ret.encoded+7)/8;
+  rac.criticalExtensions.choice.c1.choice.ueRadioAccessCapabilityInformation_r8.nonCriticalExtension = NULL;
+
+  /* 8192 is arbitrary, should be big enough */
+  buf2 = malloc16(8192);
+  if (buf2 == NULL) abort();
+  ret = uper_encode_to_buffer(&asn_DEF_UERadioAccessCapabilityInformation, &rac, buf2, 8192);
+  if (ret.encoded == -1) abort();
+
+  MessageDef *msg_p;
+
+  msg_p = itti_alloc_new_message (TASK_RRC_ENB, S1AP_UE_CAPABILITIES_IND);
+  S1AP_UE_CAPABILITIES_IND (msg_p).eNB_ue_s1ap_id = ue_context_pP->ue_context.eNB_ue_s1ap_id;
+  S1AP_UE_CAPABILITIES_IND (msg_p).ue_radio_cap.length = (ret.encoded+7)/8;
+  S1AP_UE_CAPABILITIES_IND (msg_p).ue_radio_cap.buffer = buf2;
+
+  itti_send_msg_to_task (TASK_S1AP, ctxt_pP->instance, msg_p);
 }
 
 //------------------------------------------------------------------------------
@@ -894,33 +904,36 @@ rrc_eNB_send_S1AP_NAS_FIRST_REQ(
             decode_attach_request(&e_msg->attach_request, pdu_buff, pdu_len);
 
             if (e_msg->attach_request.oldgutiorimsi.imsi.typeofidentity == MOBILE_IDENTITY_IMSI) {
-              ue_context_pP->ue_context.ue_imsi[0] = '0' + e_msg->attach_request.oldgutiorimsi.imsi.digit1;
-              ue_context_pP->ue_context.ue_imsi[1] = '0' + e_msg->attach_request.oldgutiorimsi.imsi.digit2;
-              ue_context_pP->ue_context.ue_imsi[2] = '0' + e_msg->attach_request.oldgutiorimsi.imsi.digit3;
-              ue_context_pP->ue_context.ue_imsi[3] = '0' + e_msg->attach_request.oldgutiorimsi.imsi.digit4;
-              ue_context_pP->ue_context.ue_imsi[4] = '0' + e_msg->attach_request.oldgutiorimsi.imsi.digit5;
-              ue_context_pP->ue_context.ue_imsi[5] = '0' + e_msg->attach_request.oldgutiorimsi.imsi.digit6;
-              ue_context_pP->ue_context.ue_imsi[6] = '0' + e_msg->attach_request.oldgutiorimsi.imsi.digit7;
-              ue_context_pP->ue_context.ue_imsi[7] = '0' + e_msg->attach_request.oldgutiorimsi.imsi.digit8;
-              ue_context_pP->ue_context.ue_imsi[8] = '0' + e_msg->attach_request.oldgutiorimsi.imsi.digit9;
-              ue_context_pP->ue_context.ue_imsi[9] = '0' + e_msg->attach_request.oldgutiorimsi.imsi.digit10;
-              ue_context_pP->ue_context.ue_imsi[10] = '0' + e_msg->attach_request.oldgutiorimsi.imsi.digit11;
-              ue_context_pP->ue_context.ue_imsi[11] = '0' + e_msg->attach_request.oldgutiorimsi.imsi.digit12;
-              ue_context_pP->ue_context.ue_imsi[12] = '0' + e_msg->attach_request.oldgutiorimsi.imsi.digit13;
-              ue_context_pP->ue_context.ue_imsi[13] = '0' + e_msg->attach_request.oldgutiorimsi.imsi.digit14;
-              ue_context_pP->ue_context.ue_imsi[14] = '0' + e_msg->attach_request.oldgutiorimsi.imsi.digit15;
-              ue_context_pP->ue_context.ue_imsi[15] = '\0';
+              ue_context_pP->ue_context.ue_imsi = 0;
+              ue_context_pP->ue_context.ue_imsi = e_msg->attach_request.oldgutiorimsi.imsi.digit15;
+              ue_context_pP->ue_context.ue_imsi += e_msg->attach_request.oldgutiorimsi.imsi.digit14 * 10;
+              ue_context_pP->ue_context.ue_imsi += e_msg->attach_request.oldgutiorimsi.imsi.digit13 * 100;
+              ue_context_pP->ue_context.ue_imsi += e_msg->attach_request.oldgutiorimsi.imsi.digit12 * 1000;
+              ue_context_pP->ue_context.ue_imsi += e_msg->attach_request.oldgutiorimsi.imsi.digit11 * 10000;
+              ue_context_pP->ue_context.ue_imsi += e_msg->attach_request.oldgutiorimsi.imsi.digit10 * 100000;
+              ue_context_pP->ue_context.ue_imsi += e_msg->attach_request.oldgutiorimsi.imsi.digit9 * 1000000;
+              ue_context_pP->ue_context.ue_imsi += e_msg->attach_request.oldgutiorimsi.imsi.digit8 * 10000000;
+              ue_context_pP->ue_context.ue_imsi += e_msg->attach_request.oldgutiorimsi.imsi.digit7 * 100000000;
+              ue_context_pP->ue_context.ue_imsi += e_msg->attach_request.oldgutiorimsi.imsi.digit6 * 1000000000;
+              ue_context_pP->ue_context.ue_imsi += e_msg->attach_request.oldgutiorimsi.imsi.digit5 * 10000000000;
+              ue_context_pP->ue_context.ue_imsi += e_msg->attach_request.oldgutiorimsi.imsi.digit4 * 100000000000;
+              ue_context_pP->ue_context.ue_imsi += e_msg->attach_request.oldgutiorimsi.imsi.digit3 * 1000000000000;
+              ue_context_pP->ue_context.ue_imsi += e_msg->attach_request.oldgutiorimsi.imsi.digit2 * 10000000000000;
+              ue_context_pP->ue_context.ue_imsi += e_msg->attach_request.oldgutiorimsi.imsi.digit1 * 100000000000000;
             }
             // else if (e_msg->attach_request.oldgutiorimsi.guti.typeofidentity == EPS_MOBILE_IDENTITY_GUTI) {
-            //   ue_context_pP->ue_context.plmn_id[0] = '0' + e_msg->attach_request.oldgutiorimsi.guti.mccdigit1;
-            //   ue_context_pP->ue_context.plmn_id[1] = '0' + e_msg->attach_request.oldgutiorimsi.guti.mccdigit2;
-            //   ue_context_pP->ue_context.plmn_id[2] = '0' + e_msg->attach_request.oldgutiorimsi.guti.mccdigit3;
-            //   ue_context_pP->ue_context.plmn_id[3] = '0' + e_msg->attach_request.oldgutiorimsi.guti.mncdigit1;
-            //   ue_context_pP->ue_context.plmn_id[4] = '0' + e_msg->attach_request.oldgutiorimsi.guti.mncdigit2;
-            //   ue_context_pP->ue_context.plmn_id[5] = '\0';
+            //   ue_context_pP->ue_context.plmn_id = e_msg->attach_request.oldgutiorimsi.guti.mccdigit1;
+            //   ue_context_pP->ue_context.plmn_id *= 10;
+            //   ue_context_pP->ue_context.plmn_id += e_msg->attach_request.oldgutiorimsi.guti.mccdigit2;
+            //   ue_context_pP->ue_context.plmn_id *= 10;
+            //   ue_context_pP->ue_context.plmn_id += e_msg->attach_request.oldgutiorimsi.guti.mccdigit3;
+            //   ue_context_pP->ue_context.plmn_id *= 10;
+            //   ue_context_pP->ue_context.plmn_id += e_msg->attach_request.oldgutiorimsi.guti.mncdigit1;
+            //   ue_context_pP->ue_context.plmn_id *= 10;
+            //   ue_context_pP->ue_context.plmn_id += e_msg->attach_request.oldgutiorimsi.guti.mncdigit2;
             //   if (e_msg->attach_request.oldgutiorimsi.guti.mncdigit3 != 0xF) {
-            //     ue_context_pP->ue_context.plmn_id[5] = '0' + e_msg->attach_request.oldgutiorimsi.guti.mncdigit3;
-            //     ue_context_pP->ue_context.plmn_id[6] = '\0';
+            //     ue_context_pP->ue_context.plmn_id *= 10;
+            //     ue_context_pP->ue_context.plmn_id += e_msg->attach_request.oldgutiorimsi.guti.mncdigit3;
             //   }
             // }
           }
@@ -1068,12 +1081,15 @@ rrc_eNB_process_S1AP_DOWNLINK_NAS(
   uint32_t eNB_ue_s1ap_id;
   uint32_t length;
   uint8_t *buffer;
+  uint8_t srb_id;
 
   struct rrc_eNB_ue_context_s* ue_context_p = NULL;
   protocol_ctxt_t              ctxt;
   ue_initial_id = S1AP_DOWNLINK_NAS (msg_p).ue_initial_id;
   eNB_ue_s1ap_id = S1AP_DOWNLINK_NAS (msg_p).eNB_ue_s1ap_id;
   ue_context_p = rrc_eNB_get_ue_context_from_s1ap_ids(instance, ue_initial_id, eNB_ue_s1ap_id);
+  srb_id = ue_context_p->ue_context.Srb2.Srb_info.Srb_id;
+
   LOG_I(RRC, "[eNB %d] Received %s: ue_initial_id %d, eNB_ue_s1ap_id %d\n",
         instance,
         msg_name,
@@ -1134,21 +1150,13 @@ rrc_eNB_process_S1AP_DOWNLINK_NAS(
           uint16_t mcc = s1ap_ue_ctxt->eNB_instance->mcc;
           uint16_t mnc = s1ap_ue_ctxt->eNB_instance->mnc;
           uint8_t  mnc_digit_length = s1ap_ue_ctxt->eNB_instance->mnc_digit_length;
-          ue_context_p->ue_context.plmn_id[2] = '0' + (mcc % 10);
-          mcc = (int) mcc / 10;
-          ue_context_p->ue_context.plmn_id[1] = '0' + (mcc % 10);
-          mcc = (int) mcc / 10;
-          ue_context_p->ue_context.plmn_id[0] = '0' + (mcc % 10);
+          ue_context_p->ue_context.plmn_id = mcc;
           if (mnc_digit_length > 2) {
-            ue_context_p->ue_context.plmn_id[5] = '0' + (mnc % 10);
-            mnc = (int) mnc / 10;
-            ue_context_p->ue_context.plmn_id[6] = '\0';
+            ue_context_p->ue_context.plmn_id *= 1000;
           } else {
-            ue_context_p->ue_context.plmn_id[5] = '\0';
+            ue_context_p->ue_context.plmn_id *= 100;
           }
-          ue_context_p->ue_context.plmn_id[4] = '0' + (mnc % 10);
-          mnc = (int) mnc / 10;
-          ue_context_p->ue_context.plmn_id[3] = '0' + (mnc % 10);
+          ue_context_p->ue_context.plmn_id += mnc;
         }
       }
       /* PLMN ID extraction without NAS hack */
@@ -1182,16 +1190,18 @@ rrc_eNB_process_S1AP_DOWNLINK_NAS(
 
     LOG_F(RRC,"\n");
 #endif
-
+    /*
+     * switch UL or DL NAS message without RRC piggybacked to SRB2 if active.
+     */
     /* Transfer data to PDCP */
     rrc_data_req (
-                 &ctxt,
-                 DCCH,
-                 *rrc_eNB_mui++,
-                 SDU_CONFIRM_NO,
-                 length,
-                 buffer,
-                 PDCP_TRANSMISSION_MODE_CONTROL);
+		  &ctxt,
+		  srb_id,
+		  *rrc_eNB_mui++,
+		  SDU_CONFIRM_NO,
+		  length,
+		  buffer,
+		  PDCP_TRANSMISSION_MODE_CONTROL);
 
     return (0);
   }
@@ -1263,6 +1273,7 @@ int rrc_eNB_process_S1AP_INITIAL_CONTEXT_SETUP_REQ(MessageDef *msg_p, const char
       rrc_eNB_process_GTPV1U_CREATE_TUNNEL_RESP(
           &ctxt,
           &create_tunnel_resp);
+      ue_context_p->ue_context.setup_e_rabs=ue_context_p->ue_context.nb_of_e_rabs;
     }
 
     /* TODO parameters yet to process ... */
@@ -1336,15 +1347,18 @@ int rrc_eNB_process_S1AP_INITIAL_CONTEXT_SETUP_REQ(MessageDef *msg_p, const char
     //           decode_attach_accept(&e_msg->attach_accept, pdu_buff, pdu_len);
 
     //           if (e_msg->attach_accept.guti.guti.typeofidentity == EPS_MOBILE_IDENTITY_GUTI) {
-    //             ue_context_p->ue_context.plmn_id[0] = '0' + e_msg->attach_accept.guti.guti.mccdigit1;
-    //             ue_context_p->ue_context.plmn_id[1] = '0' + e_msg->attach_accept.guti.guti.mccdigit2;
-    //             ue_context_p->ue_context.plmn_id[2] = '0' + e_msg->attach_accept.guti.guti.mccdigit3;
-    //             ue_context_p->ue_context.plmn_id[3] = '0' + e_msg->attach_accept.guti.guti.mncdigit1;
-    //             ue_context_p->ue_context.plmn_id[4] = '0' + e_msg->attach_accept.guti.guti.mncdigit2;
-    //             ue_context_p->ue_context.plmn_id[5] = '\0';
+    //             ue_context_p->ue_context.plmn_id = e_msg->attach_accept.guti.guti.mccdigit1;
+    //             ue_context_p->ue_context.plmn_id *= 10;
+    //             ue_context_p->ue_context.plmn_id += e_msg->attach_accept.guti.guti.mccdigit2;
+    //             ue_context_p->ue_context.plmn_id *= 10;
+    //             ue_context_p->ue_context.plmn_id += e_msg->attach_accept.guti.guti.mccdigit3;
+    //             ue_context_p->ue_context.plmn_id *= 10;
+    //             ue_context_p->ue_context.plmn_id += e_msg->attach_accept.guti.guti.mncdigit1;
+    //             ue_context_p->ue_context.plmn_id *= 10;
+    //             ue_context_p->ue_context.plmn_id += e_msg->attach_accept.guti.guti.mncdigit2;
     //             if (e_msg->attach_accept.guti.guti.mncdigit3 != 0xF) {
-    //               ue_context_p->ue_context.plmn_id[5] = '0' + e_msg->attach_accept.guti.guti.mncdigit3;
-    //               ue_context_p->ue_context.plmn_id[6] = '\0';
+    //               ue_context_p->ue_context.plmn_id *= 10;
+    //               ue_context_p->ue_context.plmn_id += e_msg->attach_accept.guti.guti.mncdigit3;
     //             }
     //           }
     //         }
@@ -1652,6 +1666,182 @@ int rrc_eNB_process_S1AP_UE_CONTEXT_RELEASE_COMMAND (MessageDef *msg_p, const ch
   }
 }
 
+int rrc_eNB_process_S1AP_E_RAB_SETUP_REQ(MessageDef *msg_p, const char *msg_name, instance_t instance)
+{
+  uint16_t                        ue_initial_id;
+  uint32_t                        eNB_ue_s1ap_id;
+  gtpv1u_enb_create_tunnel_req_t  create_tunnel_req;
+  gtpv1u_enb_create_tunnel_resp_t create_tunnel_resp;
+
+  struct rrc_eNB_ue_context_s* ue_context_p = NULL;
+  protocol_ctxt_t              ctxt;
+  ue_initial_id  = S1AP_E_RAB_SETUP_REQ (msg_p).ue_initial_id;
+  eNB_ue_s1ap_id = S1AP_E_RAB_SETUP_REQ (msg_p).eNB_ue_s1ap_id;
+  ue_context_p   = rrc_eNB_get_ue_context_from_s1ap_ids(instance, ue_initial_id, eNB_ue_s1ap_id);
+  LOG_I(RRC, "[eNB %d] Received %s: ue_initial_id %d, eNB_ue_s1ap_id %d, nb_of_e_rabs %d\n",
+        instance, msg_name, ue_initial_id, eNB_ue_s1ap_id, S1AP_E_RAB_SETUP_REQ (msg_p).nb_e_rabs_tosetup);
+
+  if (ue_context_p == NULL) {
+    /* Can not associate this message to an UE index, send a failure to S1AP and discard it! */
+    MessageDef *msg_fail_p = NULL;
+
+    LOG_W(RRC, "[eNB %d] In S1AP_E_RAB_SETUP_REQ: unknown UE from S1AP ids (%d, %d)\n", instance, ue_initial_id, eNB_ue_s1ap_id);
+
+    msg_fail_p = itti_alloc_new_message (TASK_RRC_ENB, S1AP_E_RAB_SETUP_REQUEST_FAIL);
+    S1AP_E_RAB_SETUP_REQ  (msg_fail_p).eNB_ue_s1ap_id = eNB_ue_s1ap_id;
+
+    // TODO add failure cause when defined!
+
+    itti_send_msg_to_task (TASK_S1AP, instance, msg_fail_p);
+    return (-1);
+  } else {
+
+    PROTOCOL_CTXT_SET_BY_INSTANCE(&ctxt, instance, ENB_FLAG_YES, ue_context_p->ue_context.rnti, 0, 0);
+    ue_context_p->ue_context.eNB_ue_s1ap_id = S1AP_E_RAB_SETUP_REQ  (msg_p).eNB_ue_s1ap_id;
+
+    /* Save e RAB information for later */
+    {
+      int i;
+
+      memset(&create_tunnel_req, 0 , sizeof(create_tunnel_req));
+      uint8_t nb_e_rabs_tosetup = S1AP_E_RAB_SETUP_REQ  (msg_p).nb_e_rabs_tosetup;
+
+      // keep the previous bearer
+      // the index for the rec
+      for (i = 0;
+	   i < nb_e_rabs_tosetup;
+	   i++) {
+	if (ue_context_p->ue_context.e_rab[i+ue_context_p->ue_context.setup_e_rabs].status == E_RAB_STATUS_DONE)
+	  LOG_W(RRC,"E-RAB already configured, reconfiguring\n");
+        ue_context_p->ue_context.e_rab[i+ue_context_p->ue_context.setup_e_rabs].status = E_RAB_STATUS_NEW;
+        ue_context_p->ue_context.e_rab[i+ue_context_p->ue_context.setup_e_rabs].param = S1AP_E_RAB_SETUP_REQ  (msg_p).e_rab_setup_params[i];
+
+
+        create_tunnel_req.eps_bearer_id[i]       = S1AP_E_RAB_SETUP_REQ  (msg_p).e_rab_setup_params[i].e_rab_id;
+        create_tunnel_req.sgw_S1u_teid[i]        = S1AP_E_RAB_SETUP_REQ  (msg_p).e_rab_setup_params[i].gtp_teid;
+
+        memcpy(&create_tunnel_req.sgw_addr[i],
+               & S1AP_E_RAB_SETUP_REQ (msg_p).e_rab_setup_params[i].sgw_addr,
+               sizeof(transport_layer_addr_t));
+
+	LOG_I(RRC,"E_RAB setup REQ: local index %d teid %u, eps id %d \n",
+	      i+ue_context_p->ue_context.setup_e_rabs,
+	      create_tunnel_req.sgw_S1u_teid[i],
+	       create_tunnel_req.eps_bearer_id[i] );
+      }
+      ue_context_p->ue_context.nb_of_e_rabs=nb_e_rabs_tosetup;
+
+
+      create_tunnel_req.rnti       = ue_context_p->ue_context.rnti; // warning put zero above
+      create_tunnel_req.num_tunnels    = i;
+
+      // NN: not sure if we should create a new tunnel: need to check teid, etc.
+      gtpv1u_create_s1u_tunnel(
+        instance,
+        &create_tunnel_req,
+        &create_tunnel_resp);
+
+      rrc_eNB_process_GTPV1U_CREATE_TUNNEL_RESP(
+          &ctxt,
+          &create_tunnel_resp);
+
+      ue_context_p->ue_context.setup_e_rabs+=nb_e_rabs_tosetup;
+
+    }
+
+    /* TODO parameters yet to process ... */
+    {
+      //      S1AP_INITIAL_CONTEXT_SETUP_REQ(msg_p).ue_ambr;
+    }
+
+    rrc_eNB_generate_dedicatedRRCConnectionReconfiguration(&ctxt, ue_context_p, 0);
+
+    return (0);
+  }
+}
+
+/*NN: careful about the typcast of xid (long -> uint8_t*/
+int rrc_eNB_send_S1AP_E_RAB_SETUP_RESP(const protocol_ctxt_t* const ctxt_pP,
+				   rrc_eNB_ue_context_t*          const ue_context_pP,
+				   uint8_t xid ){
+
+  MessageDef      *msg_p         = NULL;
+  int e_rab;
+  int e_rabs_done = 0;
+  int e_rabs_failed = 0;
+
+  msg_p = itti_alloc_new_message (TASK_RRC_ENB, S1AP_E_RAB_SETUP_RESP);
+  S1AP_E_RAB_SETUP_RESP (msg_p).eNB_ue_s1ap_id = ue_context_pP->ue_context.eNB_ue_s1ap_id;
+
+  for (e_rab = 0; e_rab <  ue_context_pP->ue_context.setup_e_rabs ; e_rab++) {
+
+    /* only respond to the corresponding transaction */
+    //if (((xid+1)%4) == ue_context_pP->ue_context.e_rab[e_rab].xid) {
+    if (xid == ue_context_pP->ue_context.e_rab[e_rab].xid) {
+
+      if (ue_context_pP->ue_context.e_rab[e_rab].status == E_RAB_STATUS_DONE) {
+
+	S1AP_E_RAB_SETUP_RESP (msg_p).e_rabs[e_rabs_done].e_rab_id = ue_context_pP->ue_context.e_rab[e_rab].param.e_rab_id;
+	// TODO add other information from S1-U when it will be integrated
+	S1AP_E_RAB_SETUP_RESP (msg_p).e_rabs[e_rabs_done].gtp_teid = ue_context_pP->ue_context.enb_gtp_teid[e_rab];
+	S1AP_E_RAB_SETUP_RESP (msg_p).e_rabs[e_rabs_done].eNB_addr = ue_context_pP->ue_context.enb_gtp_addrs[e_rab];
+	//S1AP_E_RAB_SETUP_RESP (msg_p).e_rabs[e_rab].eNB_addr.length += 4;
+	ue_context_pP->ue_context.e_rab[e_rab].status = E_RAB_STATUS_ESTABLISHED;
+
+	LOG_I (RRC,"enb_gtp_addr (msg index %d, e_rab index %d, status %d, xid %d): nb_of_e_rabs %d,  e_rab_id %d, teid: %u, addr: %d.%d.%d.%d \n ",
+	       e_rabs_done,  e_rab, ue_context_pP->ue_context.e_rab[e_rab].status, xid,
+	       ue_context_pP->ue_context.nb_of_e_rabs,
+	       S1AP_E_RAB_SETUP_RESP (msg_p).e_rabs[e_rabs_done].e_rab_id,
+	       S1AP_E_RAB_SETUP_RESP (msg_p).e_rabs[e_rabs_done].gtp_teid,
+	       S1AP_E_RAB_SETUP_RESP (msg_p).e_rabs[e_rabs_done].eNB_addr.buffer[0],
+	       S1AP_E_RAB_SETUP_RESP (msg_p).e_rabs[e_rabs_done].eNB_addr.buffer[1],
+	       S1AP_E_RAB_SETUP_RESP (msg_p).e_rabs[e_rabs_done].eNB_addr.buffer[2],
+	       S1AP_E_RAB_SETUP_RESP (msg_p).e_rabs[e_rabs_done].eNB_addr.buffer[3]);
+
+	e_rabs_done++;
+      } else if ((ue_context_pP->ue_context.e_rab[e_rab].status == E_RAB_STATUS_NEW)  ||
+		 (ue_context_pP->ue_context.e_rab[e_rab].status == E_RAB_STATUS_ESTABLISHED)){
+	LOG_D (RRC,"E-RAB is NEW or already ESTABLISHED\n");
+      }else { /* to be improved */
+	ue_context_pP->ue_context.e_rab[e_rab].status = E_RAB_STATUS_FAILED;
+	S1AP_E_RAB_SETUP_RESP  (msg_p).e_rabs_failed[e_rabs_failed].e_rab_id = ue_context_pP->ue_context.e_rab[e_rab].param.e_rab_id;
+	e_rabs_failed++;
+	// TODO add cause when it will be integrated
+      }
+
+
+      S1AP_E_RAB_SETUP_RESP (msg_p).nb_of_e_rabs = e_rabs_done;
+      S1AP_E_RAB_SETUP_RESP (msg_p).nb_of_e_rabs_failed = e_rabs_failed;
+      // NN: add conditions for e_rabs_failed
+      if ((e_rabs_done > 0) ){
+
+	LOG_I(RRC,"S1AP_E_RAB_SETUP_RESP: sending the message: nb_of_erabs %d, total e_rabs %d, index %d\n",
+	      ue_context_pP->ue_context.nb_of_e_rabs, ue_context_pP->ue_context.setup_e_rabs, e_rab);
+	MSC_LOG_TX_MESSAGE(
+			   MSC_RRC_ENB,
+			   MSC_S1AP_ENB,
+			   (const char *)&S1AP_E_RAB_SETUP_RESP (msg_p),
+			   sizeof(s1ap_e_rab_setup_resp_t),
+			   MSC_AS_TIME_FMT" E_RAB_SETUP_RESP UE %X eNB_ue_s1ap_id %u e_rabs:%u succ %u fail",
+			   MSC_AS_TIME_ARGS(ctxt_pP),
+			   ue_context_pP->ue_id_rnti,
+			   S1AP_E_RAB_SETUP_RESP (msg_p).eNB_ue_s1ap_id,
+			   e_rabs_done, e_rabs_failed);
+
+
+	itti_send_msg_to_task (TASK_S1AP, ctxt_pP->instance, msg_p);
+      }
+
+    } else {
+      /*debug info for the xid */
+      LOG_D(RRC,"xid does not corresponds  (context e_rab index %d, status %d, xid %d/%d) \n ",
+      	     e_rab, ue_context_pP->ue_context.e_rab[e_rab].status, xid, ue_context_pP->ue_context.e_rab[e_rab].xid);
+    }
+
+  }
+
+  return 0;
+}
 
 # endif /* defined(ENABLE_ITTI) */
 #endif /* defined(ENABLE_USE_MME) */
